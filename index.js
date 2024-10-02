@@ -8,20 +8,18 @@ const urlPattern = /GET\s(https?:\/\/)?(www\.)?([a-z0-9.-]+\.[a-z]{2,})?(\/\S*)+
 function sanitizeLine(line) {
     // Remove any null bytes
     line = line.replace(/\0/g, '');
-    
     // Trim whitespace from the beginning and end
     line = line.trim();
     
     return line;
 }
 
-function parseLogFile(filePath) {
+function parseLog(filePath) {
     const ipAddresses = new Set();
     const urlVisits = new Map();
     const ipActivity = new Map();
 
     return new Promise((resolve, reject) => {
-
         const fileStream = fs.createReadStream(filePath);
         fileStream.on('error', (error) => reject(`Error reading file: ${error.message}`));
 
@@ -36,6 +34,7 @@ function parseLogFile(filePath) {
                 const ipMatch = sanitizedLine.match(ipPattern);
                 const urlMatch = sanitizedLine.match(urlPattern);
 
+                // Invalidation/Mismatch of either IP or URL won't be consider an entry
                 if (ipMatch && urlMatch) {
                     const ip = ipMatch[0];
                     // Getting path of the match including query strings and fragments
@@ -51,7 +50,6 @@ function parseLogFile(filePath) {
         });
 
         rl.on('close', () => {
-            console.log(urlVisits);
             resolve({ ipAddresses, urlVisits, ipActivity });
         });
     });
@@ -63,9 +61,10 @@ function getTop3(map) {
         .slice(0, 3);
 }
 
-async function reportStatistics(filePath) {
+async function reportLog(filePath) {
     try {
-        const { ipAddresses, urlVisits, ipActivity } = await parseLogFile(filePath);
+        // If parseLog rejected will throw rejected error message
+        const { ipAddresses, urlVisits, ipActivity } = await parseLog(filePath);
 
         console.log(`Number of unique IP addresses: ${ipAddresses.size}`);
 
@@ -83,6 +82,5 @@ async function reportStatistics(filePath) {
     }
 }
 
-// Usage
 const logFilePath = 'data.log';
-reportStatistics(logFilePath);
+reportLog(logFilePath);
