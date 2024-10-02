@@ -3,13 +3,15 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint -c .js"
   },
   "author": "Ray Tsai",
   "license": "ISC",
   "description": "",
   "devDependencies": {
     "eslint": "^9.11.1",
-    "globals": "^15.10.0"
+    "globals": "^15.10.0",
+    "jest": "^29.7.0"
   }
 }
