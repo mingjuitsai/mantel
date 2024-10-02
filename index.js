@@ -71,10 +71,10 @@ function parseLog(filePath) {
     });
 }
 
-function sortMapByHigherNumber(map, slice = -1) {
+function sortMapByHigherNumber(map, top = -1) {
     return Array.from(map.entries())
         .sort((a, b) => b[1] - a[1])
-        .slice(0, slice);
+        .slice(0, top);
 }
 
 async function reportLog(filePath) {
