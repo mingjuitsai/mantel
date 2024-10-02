@@ -10,7 +10,7 @@ function sanitizeLine(line) {
     line = line.replace(/\0/g, '');
     // Trim whitespace from the beginning and end
     line = line.trim();
-    
+
     return line;
 }
 
@@ -49,7 +49,7 @@ function parseLog(filePath) {
             crlfDelay: Infinity
         });
 
-        rl.on('line', (line) => {            
+        rl.on('line', (line) => {
             try {
                 const entry = getUserEntry(line);
 
@@ -78,6 +78,8 @@ function sortMapByHigherNumber(map, top = -1) {
 }
 
 async function reportLog(filePath) {
+    const startTime = process.hrtime();
+
     try {
         // If parseLog rejected will throw rejected error message
         const { ipAddresses, urlVisits, ipActivity } = await parseLog(filePath);
@@ -95,6 +97,11 @@ async function reportLog(filePath) {
         });
     } catch (error) {
         console.error(`Error generating report: ${error}`);
+    } finally {
+        // Monitor performance
+        const [seconds, nanoseconds] = process.hrtime(startTime);
+        const totalTimeMs = seconds * 1000 + nanoseconds / 1e6;
+        console.log(`Total execution time: ${totalTimeMs.toFixed(2)}ms`);
     }
 }
 
