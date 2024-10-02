@@ -3,6 +3,13 @@ import js from "@eslint/js";
 
 export default [
   js.configs.recommended,
-  {files: ["**/*.js"], languageOptions: {sourceType: "commonjs"}},
-  {languageOptions: { globals: globals.browser }},
+  {
+    files: ["**/*.js"], languageOptions: {
+      sourceType: "module", globals: {
+        ...globals.browser,
+        ...globals.node,
+      },
+    }
+  },
+  { languageOptions: { globals: globals.browser } },
 ];

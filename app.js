@@ -5,7 +5,7 @@ const ipPattern = /^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}/;
 // We don't always need the URL protocols. Path is most required
 const urlPattern = /GET\s(https?:\/\/)?(www\.)?([a-z0-9.-]+\.[a-z]{2,})?(\/\S*)+?/i;
 
-function sanitizeLine(line) {
+export function sanitizeLine(line) {
     // Remove any null bytes
     line = line.replace(/\0/g, '');
     // Trim whitespace from the beginning and end
@@ -15,7 +15,7 @@ function sanitizeLine(line) {
 }
 
 // Return user entry ip and url if both valid
-function getUserEntry(line) {
+export function getUserEntry(line) {
     const sanitizedLine = sanitizeLine(line);
     const ipMatch = sanitizedLine.match(ipPattern);
     const urlMatch = sanitizedLine.match(urlPattern);
@@ -35,7 +35,7 @@ function getUserEntry(line) {
     return null;
 }
 
-function parseLog(filePath) {
+export function parseLog(filePath) {
     const ipAddresses = new Set();
     const urlVisits = new Map();
     const ipActivity = new Map();
@@ -71,7 +71,7 @@ function parseLog(filePath) {
     });
 }
 
-function sortMapByHigherNumber(map, top = -1) {
+export function sortMapByHigherNumber(map, top = undefined) {
     return Array.from(map.entries())
         .sort((a, b) => b[1] - a[1])
         .slice(0, top);
