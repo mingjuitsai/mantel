@@ -3,7 +3,7 @@ const readline = require('readline');
 
 const ipPattern = /^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}/;
 // We don't always need the URL protocols. Path is most required
-const urlPattern = /GET\s(https?:\/\/)?(www\.)?([a-z0-9.-]+\.[a-z]{2,})+?(\/\S*)?/i;
+const urlPattern = /GET\s(https?:\/\/)?(www\.)?([a-z0-9.-]+\.[a-z]{2,})?(\/\S*)+?/i;
 
 function sanitizeLine(line) {
     // Remove any null bytes
@@ -16,10 +16,11 @@ function sanitizeLine(line) {
 }
 
 function parseLogFile(filePath) {
+    const ipAddresses = new Set();
+    const urlVisits = new Map();
+    const ipActivity = new Map();
+
     return new Promise((resolve, reject) => {
-        const ipAddresses = new Set();
-        const urlVisits = new Map();
-        const ipActivity = new Map();
 
         const fileStream = fs.createReadStream(filePath);
         fileStream.on('error', (error) => reject(`Error reading file: ${error.message}`));
@@ -29,7 +30,7 @@ function parseLogFile(filePath) {
             crlfDelay: Infinity
         });
 
-        rl.on('line', (line) => {
+        rl.on('line', (line) => {            
             try {
                 const sanitizedLine = sanitizeLine(line);
                 const ipMatch = sanitizedLine.match(ipPattern);
@@ -50,6 +51,7 @@ function parseLogFile(filePath) {
         });
 
         rl.on('close', () => {
+            console.log(urlVisits);
             resolve({ ipAddresses, urlVisits, ipActivity });
         });
     });
