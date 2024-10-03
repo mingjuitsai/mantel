@@ -1,5 +1,20 @@
-const fs = require('fs');
-const readline = require('readline');
+import * as fs from 'fs';
+import * as readline from 'readline';
+import * as path from 'path';
+
+// Get the log file path from command-line arguments
+const logFilePath = process.argv[2];
+
+if (!logFilePath) {
+    console.error('Please provide a path to the log file.');
+    console.error('Usage: node app.js <path-to-log-file>');
+    process.exit(1);
+}
+
+// Resolve the path to handle relative paths
+const resolvedPath = path.resolve(logFilePath);
+
+console.log(`Parsing log file: ${resolvedPath}`);
 
 const ipPattern = /^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}/;
 // We don't always need the URL protocols. Path is most required
@@ -104,5 +119,4 @@ async function reportLog(filePath) {
     }
 }
 
-const logFilePath = 'data.log';
-reportLog(logFilePath);
+reportLog(resolvedPath);
