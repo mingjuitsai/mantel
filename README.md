@@ -2,7 +2,7 @@
 
 ## Overview
 
-This Log Parser Application is a Node.js-based tool designed to analyze web server log files. It processes log entries to extract information about IP addresses, URL visits, and IP activity. The application uses a streaming approach to efficiently handle large log files without excessive memory usage.
+A Node.js-based tool designed to analyze web server log files.
 
 ## Features
 
@@ -11,6 +11,17 @@ This Log Parser Application is a Node.js-based tool designed to analyze web serv
 - Track the number of visits for each URL path
 - Monitor activity levels for each IP address
 - Provide a summary report of the parsed data
+
+## Assumptions
+Our log parser assumes the following format for each log entry:
+```
+CopyIP_ADDRESS - - [DATE:TIME -TIMEZONE] "METHOD /PATH HTTP/VERSION" STATUS_CODE BYTES_SENT "REFERRER" "USER_AGENT"
+```
+
+### Example:
+```
+Copy192.168.1.1 - - [26/Apr/2000:00:23:48 -0400] "GET /index.html HTTP/1.0" 200 6248 "http://www.example.com" "Mozilla/4.08 [en] (Win98; I ;Nav)"
+```
 
 ## Installation
 
@@ -36,23 +47,6 @@ To parse a log file and generate a report, use the following command:
 
 ```
 node app.js path/to/your/logfile.log
-```
-
-### Example Output
-
-```
-Number of unique IP addresses: 2
-
-Top 3 most visited paths:
-/pics/wpaper.gif: 1 visits
-/index.html: 1 visits
-/pics/5star2000.gif: 1 visits
-
-Top 3 most active IP addresses:
-192.168.1.1: 2 requests
-192.168.1.2: 1 requests
-
-Total execution time: 153.41ms
 ```
 
 ## Testing
