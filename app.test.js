@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { sanitizeLine, getUserEntry, parseLog, sortMapByHigherNumber } from './app';
-import fs from 'fs';
-import readline from 'readline';
+import { describe, it, expect, vi } from 'vitest';
+import { Readable } from 'stream';
+import { sanitizeLine, getUserEntry, parseLogStream, sortMapByHigherNumber } from './app';
+
 
 vi.mock('fs');
 vi.mock('readline');
@@ -30,42 +30,40 @@ describe('getUserEntry', () => {
   });
 });
 
-describe('parseLog', () => {
-  beforeEach(() => {
-    vi.resetAllMocks();
+describe('parseLogStream', () => {
+    it('correctly parses valid log entries', async () => {
+      const mockData = [
+        '192.168.1.1 - - [26/Apr/2000:00:23:48 -0400] "GET /pics/wpaper.gif HTTP/1.0" 200 6248 "http://www.jafsoft.com/asctortf/" "Mozilla/4.05 (Macintosh; I; PPC)"',
+        '192.168.1.2 - - [26/Apr/2000:00:23:49 -0400] "GET /index.html HTTP/1.0" 200 7352 "http://www.jafsoft.com/asctortf/" "Mozilla/4.05 (Macintosh; I; PPC)"',
+        '192.168.1.1 - - [26/Apr/2000:00:23:50 -0400] "GET /pics/5star2000.gif HTTP/1.0" 200 4005 "http://www.jafsoft.com/asctortf/" "Mozilla/4.05 (Macintosh; I; PPC)"'
+      ];
+
+      const mockReadable = Readable.from(mockData.join('\n'));
+
+      const result = await parseLogStream(mockReadable);
+
+      console.log(result);
+
+      expect(result.ipAddresses.size).toBe(2);
+      expect(result.urlVisits.get('/pics/wpaper.gif')).toBe(1);
+      expect(result.urlVisits.get('/index.html')).toBe(1);
+      expect(result.urlVisits.get('/pics/5star2000.gif')).toBe(1);
+      expect(result.ipActivity.get('192.168.1.1')).toBe(2);
+      expect(result.ipActivity.get('192.168.1.2')).toBe(1);
+    });
+
+    it('handles empty stream', async () => {
+      const mockReadable = Readable.from([]);
+
+      const result = await parseLogStream(mockReadable);
+
+      expect(result.ipAddresses.size).toBe(0);
+      expect(result.urlVisits.size).toBe(0);
+      expect(result.ipActivity.size).toBe(0);
+    });
+
+    // Add more tests for parseLogStream as needed
   });
-
-  it('correctly parses log file', async () => {
-    const mockLines = [
-      '192.168.1.1 - - [26/Apr/2000:00:23:48 -0400] "GET /index.html HTTP/1.0" 200 6248',
-      '192.168.1.2 - - [26/Apr/2000:00:23:49 -0400] "GET /about.html HTTP/1.0" 200 6248',
-      '192.168.1.1 - - [26/Apr/2000:00:23:50 -0400] "GET /contact.html HTTP/1.0" 200 6248'
-    ];
-
-    const mockReadline = {
-      on: vi.fn((event, callback) => {
-        if (event === 'line') {
-          mockLines.forEach(callback);
-        }
-        if (event === 'close') {
-          callback();
-        }
-      })
-    };
-
-    vi.spyOn(readline, 'createInterface').mockReturnValue(mockReadline);
-    vi.spyOn(fs, 'createReadStream').mockReturnValue({});
-
-    const result = await parseLog('mockFilePath');
-
-    expect(result.ipAddresses.size).toBe(2);
-    expect(result.urlVisits.get('/index.html')).toBe(1);
-    expect(result.urlVisits.get('/about.html')).toBe(1);
-    expect(result.urlVisits.get('/contact.html')).toBe(1);
-    expect(result.ipActivity.get('192.168.1.1')).toBe(2);
-    expect(result.ipActivity.get('192.168.1.2')).toBe(1);
-  });
-});
 
 describe('sortMapByHigherNumber', () => {
   it('sorts map by higher number and limits results', () => {

@@ -6,69 +6,68 @@ const ipPattern = /^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}/;
 const urlPattern = /GET\s(https?:\/\/)?(www\.)?([a-z0-9.-]+\.[a-z]{2,})?(\/\S*)+?/i;
 
 export function sanitizeLine(line) {
-    // Remove any null bytes
-    line = line.replace(/\0/g, '');
-    // Trim whitespace from the beginning and end
-    line = line.trim();
-
-    return line;
+    return line.replace(/\0/g, '').trim();
 }
 
 // Return user entry ip and url if both valid
 export function getUserEntry(line) {
-    const sanitizedLine = sanitizeLine(line);
-    const ipMatch = sanitizedLine.match(ipPattern);
-    const urlMatch = sanitizedLine.match(urlPattern);
+    try {
+        const sanitizedLine = sanitizeLine(line);
+        const ipMatch = sanitizedLine.match(ipPattern);
+        const urlMatch = sanitizedLine.match(urlPattern);
+        // Invalidation/Mismatch of either IP or URL won't be consider an entry
+        if (ipMatch && urlMatch) {
+            const ip = ipMatch[0];
+            // Getting path of the match including query strings and fragments
+            const path = urlMatch.at(-1);
 
-    // Invalidation/Mismatch of either IP or URL won't be consider an entry
-    if (ipMatch && urlMatch) {
-        const ip = ipMatch[0];
-        // Getting path of the match including query strings and fragments
-        const path = urlMatch.at(-1);
-
-        return {
-            ip,
-            path
+            return {
+                ip,
+                path
+            }
         }
+    } catch (error) {
+        console.error(`Error processing entry: ${error.message}`);
     }
 
     return null;
 }
 
-export function parseLog(filePath) {
-    const ipAddresses = new Set();
-    const urlVisits = new Map();
-    const ipActivity = new Map();
 
+export function parseLogStream(readableStream) {
     return new Promise((resolve, reject) => {
-        const fileStream = fs.createReadStream(filePath);
-        fileStream.on('error', (error) => reject(`Error reading file: ${error.message}`));
+        const ipAddresses = new Set();
+        const urlVisits = new Map();
+        const ipActivity = new Map();
 
         const rl = readline.createInterface({
-            input: fileStream,
+            input: readableStream,
             crlfDelay: Infinity
         });
 
         rl.on('line', (line) => {
-            try {
-                const entry = getUserEntry(line);
+            const entry = getUserEntry(line);
 
-                // Invalidation/Mismatch of either IP or URL won't be consider an entry
-                if (entry) {
-                    const { ip, path } = entry;
-                    ipAddresses.add(ip);
-                    urlVisits.set(path, (urlVisits.get(path) || 0) + 1);
-                    ipActivity.set(ip, (ipActivity.get(ip) || 0) + 1);
-                }
-            } catch (error) {
-                console.error(`Error processing line: ${error.message}`);
+            // Invalidation/Mismatch of either IP or URL won't be consider an entry
+            if (entry) {
+                const { ip, path } = entry;
+                ipAddresses.add(ip);
+                urlVisits.set(path, (urlVisits.get(path) || 0) + 1);
+                ipActivity.set(ip, (ipActivity.get(ip) || 0) + 1);
             }
         });
 
         rl.on('close', () => {
             resolve({ ipAddresses, urlVisits, ipActivity });
         });
+
+        rl.on('error', (error) => reject(`Error reading stream: ${error.message}`));
     });
+}
+
+export function parseLog(filePath) {
+    const fileStream = fs.createReadStream(filePath);
+    return parseLogStream(fileStream);
 }
 
 export function sortMapByHigherNumber(map, top = undefined) {
