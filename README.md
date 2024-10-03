@@ -55,8 +55,6 @@ Top 3 most active IP addresses:
 Total execution time: 153.41ms
 ```
 
-```
-
 ## Testing
 
 This project uses Vitest for testing. To run the tests:
